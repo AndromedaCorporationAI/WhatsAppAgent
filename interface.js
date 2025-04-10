@@ -112,11 +112,11 @@ document.addEventListener('DOMContentLoaded', () => {
         chatMessages.appendChild(typingIndicator);
         
         // Reiniciar o chatbot
-        const initialMessage = chatbotInstance.iniciar();
+        const initialMessage = "Olá! Bem-vindo ao nosso atendimento virtual. Como posso ajudar hoje?";
         setTimeout(() => {
             addMessage(initialMessage, 'bot');
             // Mostrar sugestões iniciais
-            displaySuggestions(chatbotInstance.sugerirRespostasRapidas());
+            displaySuggestions(getSuggestedResponses());
         }, 500);
     });
     
@@ -129,4 +129,99 @@ document.addEventListener('DOMContentLoaded', () => {
     function adjustChatHeight() {
         const windowHeight = window.innerHeight;
         const chatContainer = document.querySelector('.chat-container');
-        const headerHeight = document.querySelector('
+        const headerHeight = document.querySelector('header').offsetHeight;
+        const footerHeight = document.querySelector('footer').offsetHeight;
+        const availableHeight = windowHeight - headerHeight - footerHeight - 100; // 100px para margens e paddings
+        
+        if (availableHeight > 400) {
+            chatContainer.style.height = `${availableHeight}px`;
+            const chatMessages = document.getElementById('chat-messages');
+            chatMessages.style.maxHeight = `${availableHeight - 150}px`; // 150px para o header e o input do chat
+        }
+    }
+    
+    // Função para mostrar sugestões de respostas rápidas
+    function displaySuggestions(suggestions) {
+        const suggestionsContainer = document.getElementById('suggestions-container');
+        suggestionsContainer.innerHTML = '';
+        
+        if (suggestions && suggestions.length > 0) {
+            suggestions.forEach(suggestion => {
+                const suggestionBtn = document.createElement('button');
+                suggestionBtn.classList.add('suggestion-btn');
+                suggestionBtn.textContent = suggestion;
+                
+                suggestionBtn.addEventListener('click', () => {
+                    document.getElementById('message-input').value = suggestion;
+                    document.getElementById('send-button').click();
+                });
+                
+                suggestionsContainer.appendChild(suggestionBtn);
+            });
+            
+            suggestionsContainer.style.display = 'flex';
+        } else {
+            suggestionsContainer.style.display = 'none';
+        }
+    }
+    
+    // Função para obter sugestões de respostas rápidas com base no contexto
+    function getSuggestedResponses() {
+        // Sugestões padrão
+        return [
+            "Quais são os horários de funcionamento?",
+            "Como posso agendar um serviço?",
+            "Quais métodos de pagamento são aceitos?",
+            "Preciso de suporte técnico"
+        ];
+    }
+    
+    // Simulação da digitação do chatbot
+    function showTypingIndicator() {
+        const typingIndicator = document.getElementById('typing-indicator');
+        typingIndicator.style.display = 'flex';
+        setTimeout(() => {
+            typingIndicator.style.display = 'none';
+        }, 1500);
+    }
+    
+    // Inicialização do chat
+    function initChat() {
+        // Mensagem inicial do chatbot
+        setTimeout(() => {
+            showTypingIndicator();
+            setTimeout(() => {
+                addMessage("Olá! Bem-vindo à Andrômeda Corp. Como posso ajudar você hoje?", 'bot');
+                displaySuggestions(getSuggestedResponses());
+            }, 1500);
+        }, 500);
+        
+        // Ajustar altura do chat na inicialização
+        adjustChatHeight();
+    }
+    
+    // Feature cards clicáveis para enviar mensagens predefinidas
+    const featureCards = document.querySelectorAll('.feature-card');
+    featureCards.forEach(card => {
+        card.addEventListener('click', () => {
+            let message = '';
+            const cardTitle = card.querySelector('h4').textContent.toLowerCase();
+            
+            if (cardTitle.includes('agendamento')) {
+                message = "Quero agendar um serviço";
+            } else if (cardTitle.includes('pagamento')) {
+                message = "Quais são os métodos de pagamento?";
+            } else if (cardTitle.includes('faq')) {
+                message = "Preciso de informações sobre seus serviços";
+            }
+            
+            if (message) {
+                document.getElementById('message-input').value = message;
+                document.getElementById('send-button').click();
+            }
+        });
+    });
+    
+    // Iniciar o chat quando a página carregar
+    initChat();
+});
