@@ -4,7 +4,7 @@ body {
     margin: 0;
     padding: 0;
     background: linear-gradient(to right, #007bff, #6f42c1);
-    color: #fff;
+    color: #000; /* Alterando a cor da fonte para preto */
 }
 
 .container {
