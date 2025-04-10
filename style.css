@@ -1,0 +1,164 @@
+/* Reset padrão */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: Arial, sans-serif;
+    background-color: #1e90ff; /* Azul royal */
+    color: #fff;
+    line-height: 1.6;
+}
+
+header {
+    background: linear-gradient(to right, #4169e1, #87ceeb); /* Gradiente azul */
+    padding: 20px;
+    text-align: center;
+}
+
+.logo-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+}
+
+.logo-container img {
+    vertical-align: middle;
+}
+
+.logo-container h1 {
+    font-size: 24px;
+    margin: 0;
+}
+
+.logo-container p {
+    font-size: 14px;
+    margin-top: 5px;
+}
+
+.services {
+    max-width: 1200px;
+    margin: 20px auto;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+}
+
+.service-card {
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease;
+    color: #000; 
+}
+
+.service-card:hover {
+    transform: scale(1.02);
+}
+
+.service-card i {
+    color: #4169e1; /* Azul royal */
+    font-size: 24px;
+    margin-right: 10px;
+}
+
+.service-card h3 {
+    font-size: 18px;
+    margin-bottom: 10px;
+    color: #000; /* Cor da fonte ajustada para preto */
+}
+
+.service-card p {
+    font-size: 14px;
+    color: #000; /* Cor da fonte ajustada para preto */
+}
+
+.chat-section {
+    max-width: 400px;
+    margin: 20px auto;
+    background-color: #fff;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.chat-header {
+    background-color: #4169e1; /* Azul royal */
+    padding: 10px 20px;
+    color: #fff;
+    text-align: left;
+}
+
+.chat-header h3 {
+    margin: 0;
+    font-size: 18px;
+}
+
+.chat-messages {
+    padding: 20px;
+    max-height: 400px;
+    overflow-y: auto;
+    color: #000; /* Cor da fonte ajustada para preto */
+}
+
+
+.message {
+    margin-bottom: 10px;
+    padding: 10px;
+    border-radius: 8px;
+    word-break: break-word;
+    color: #000; /* Cor da fonte ajustada para preto */
+}
+
+.bot-message {
+    background-color: #f0f8ff; /* Azul claro */
+    align-self: flex-start;
+}
+
+.user-message {
+    background-color: #add8e6; /* Azul médio claro */
+    align-self: flex-end;
+}
+
+.chat-input {
+    display: flex;
+    align-items: center;
+    padding: 10px 20px;
+    background-color: #fff;
+}
+
+.chat-input input {
+    flex: 1;
+    padding: 10px;
+    border: none;
+    border-radius: 8px;
+    outline: none;
+}
+
+.chat-input button {
+    background-color: #4169e1; /* Azul royal */
+    color: #fff;
+    border: none;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    margin-left: 10px;
+}
+
+.chat-input button:hover {
+    background-color: #6495ed; /* Azul mais escuro */
+}
+
+footer {
+    text-align: center;
+    padding: 10px;
+    background-color: #1e90ff; /* Azul royal */
+    color: #fff;
+}
