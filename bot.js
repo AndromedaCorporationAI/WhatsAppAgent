@@ -20,6 +20,8 @@ class Chatbot {
 
     processMessage(message) {
         message = message.toLowerCase();
+
+        // Contexto inicial: Saudação e nome do usuário
         if (!this.nomeUsuario && (message.includes("olá") || message.includes("oi"))) {
             return "Olá! Bem-vindo ao nosso atendimento virtual. Como posso chamá-lo(a)?";
         }
@@ -27,7 +29,50 @@ class Chatbot {
             this.nomeUsuario = message.charAt(0).toUpperCase() + message.slice(1);
             return `Prazer em conhecê-lo(a), ${this.nomeUsuario}! Como posso ajudar hoje?`;
         }
-        // Restante do código do chatbot...
+
+        // FAQ: Respostas automáticas para perguntas frequentes
+        for (const [keyword, response] of Object.entries(this.faq)) {
+            if (message.includes(keyword)) {
+                return response;
+            }
+        }
+
+        // Cobrança: Informações sobre métodos de pagamento, descontos, etc.
+        for (const [keyword, response] of Object.entries(this.cobrancaInfo)) {
+            if (message.includes(keyword)) {
+                return response;
+            }
+        }
+
+        // Agendamento
+        if (message.includes("agendar")) {
+            this.conversationContext = "agendamento";
+            return "Claro! Para qual serviço você gostaria de agendar?";
+        }
+
+        if (this.conversationContext === "agendamento") {
+            this.agenda.push(message);
+            this.conversationContext = null;
+            return `Agendamento realizado para: ${message}. Posso ajudar com algo mais?`;
+        }
+
+        // Cancelamento de agendamento
+        if (message.includes("cancelar")) {
+            if (this.agenda.length > 0) {
+                const ultimoAgendamento = this.agenda.pop();
+                return `O agendamento para "${ultimoAgendamento}" foi cancelado com sucesso.`;
+            } else {
+                return "Você não possui nenhum agendamento ativo.";
+            }
+        }
+
+        // Verificação de pagamentos
+        if (message.includes("verificar pagamento")) {
+            return "Para verificar o status do pagamento, por favor informe o número do pedido ou código de referência.";
+        }
+
+        // Resposta padrão para mensagens desconhecidas
+        return "Desculpe, não entendi sua solicitação. Poderia reformular ou ser mais específico?";
     }
 }
 
