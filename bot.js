@@ -1,217 +1,466 @@
-// Classe Chatbot
+// Classe Chatbot Avançado para Andrômeda Corp
 class Chatbot {
     constructor() {
         this.nomeUsuario = '';
         this.agenda = [];
         this.conversationContext = null;
+        this.conversationHistory = [];
+        this.lastInteractionTime = null;
+        this.currentStep = null;
+        this.pendingInfo = {};
+        
+        // Base de conhecimento expandida
         this.faq = {
             "horario": "Nosso horário de funcionamento é de segunda a sexta, das 8h às 18h, e aos sábados das 8h às 12h.",
             "endereco": "Estamos localizados na Av. Principal, 1000, Centro.",
-            "pagamento": "Aceitamos pagamentos em dinheiro, cartões de crédito/débito e PIX.",
+            "pagamento": "Aceitamos pagamentos em dinheiro, cartões de crédito/débito, PIX e transferência bancária.",
             "entrega": "O prazo de entrega médio é de 3 a 5 dias úteis, dependendo da sua localização.",
-            "contato": "Você pode nos contatar pelo telefone (11) 5555-1234 ou pelo e-mail contato@andromedacorp.com.br.",
-            "suporte": "Nossa equipe de suporte está disponível durante todo o horário comercial. Para clientes com plano mensal, oferecemos suporte 24/7.",
-            "garantia": "Todos os nossos serviços possuem garantia de 90 dias.",
-            "desenvolvimento": "Desenvolvemos aplicações web, mobile, sistemas empresariais e soluções personalizadas.",
-            "consultoria": "Nossa consultoria em TI abrange análise de infraestrutura, segurança, otimização de processos e planejamento estratégico.",
-            "prazo": "O prazo para desenvolvimento de software varia conforme a complexidade do projeto, geralmente entre 1 a 6 meses."
+            "contato": "Você pode nos contatar pelo telefone (11) 5555-1234 ou pelo e-mail contato@andromedacorp.com.br",
+            "garantia": "Todos os nossos produtos têm garantia mínima de 12 meses.",
+            "suporte": "Nosso suporte técnico está disponível 24/7 através do chat ou pelo telefone (11) 5555-4321.",
+            "empresa": "A Andrômeda Corp. é uma empresa de tecnologia fundada em 2015, especializada em soluções tecnológicas inovadoras para empresas de todos os portes."
         };
+        
         this.cobrancaInfo = {
             "metodos": "Oferecemos pagamento via boleto, cartão de crédito (até 12x), PIX e transferência bancária.",
-            "desconto": "Oferecemos 10% de desconto para pagamentos à vista.",
+            "desconto": "Oferecemos 10% de desconto para pagamentos à vista e 5% para pagamentos via PIX.",
             "atraso": "Em caso de atraso, é cobrada uma taxa de 2% mais juros de 0,1% ao dia.",
             "reembolso": "O prazo para reembolso é de até 30 dias após a solicitação aprovada.",
-            "parcelas": "Parcelamos em até 12x no cartão de crédito, com juros a partir da 4ª parcela.",
-            "contrato": "Todos os nossos serviços são formalizados via contrato, garantindo segurança para ambas as partes.",
-            "precos": "Os preços variam conforme o escopo do projeto. Consultoria a partir de R$1.500,00 e suporte técnico a partir de R$150,00/hora."
+            "parcelamento": "Oferecemos parcelamento em até 12x sem juros para compras acima de R$500.",
+            "faturamento": "Para empresas, oferecemos opção de faturamento com prazo de 28 dias."
         };
-        this.servicosInfo = {
-            "consultoria": "Nossa consultoria em TI oferece uma análise completa da infraestrutura tecnológica da sua empresa, identificando pontos de melhoria e oportunidades de otimização. Preços a partir de R$1.500,00.",
-            "desenvolvimento": "Desenvolvemos soluções de software personalizadas para atender às necessidades específicas do seu negócio. Orçamentos sob consulta, baseados no escopo do projeto.",
-            "suporte": "Nosso serviço de suporte técnico oferece assistência rápida e eficiente para resolver problemas de TI. Disponível por R$150,00/hora ou plano mensal a partir de R$800,00.",
-            "treinamento": "Oferecemos treinamentos personalizados para sua equipe utilizar melhor os recursos tecnológicos. Turmas a partir de R$2.000,00.",
-            "auditoria": "Realizamos auditoria completa em sua infraestrutura de TI e segurança digital. Serviço a partir de R$3.000,00.",
-            "cloud": "Serviços de migração e gestão de ambientes em nuvem, com planos a partir de R$1.200,00 mensais."
+        
+        // Serviços disponíveis
+        this.servicos = {
+            "consultoria": {
+                "nome": "Consultoria em TI",
+                "descricao": "Análise completa da infraestrutura de TI e recomendações para otimização.",
+                "preco": "A partir de R$1.500,00",
+                "disponibilidade": "Segunda a sexta, das 9h às 17h"
+            },
+            "desenvolvimento": {
+                "nome": "Desenvolvimento de Software",
+                "descricao": "Criação de soluções personalizadas para o seu negócio.",
+                "preco": "Orçamento sob consulta",
+                "disponibilidade": "Projetos com prazo médio de 3 meses"
+            },
+            "suporte": {
+                "nome": "Suporte Técnico",
+                "descricao": "Assistência técnica para resolução de problemas de TI.",
+                "preco": "R$150,00/hora ou plano mensal a partir de R$800,00",
+                "disponibilidade": "24/7 com prioridade para clientes com plano mensal"
+            }
+        };
+        
+        // Fluxos de conversa predefinidos
+        this.conversationFlows = {
+            "agendamento": {
+                steps: ["servico", "data", "horario", "nome", "contato", "confirmacao"],
+                currentStep: 0,
+                data: {}
+            },
+            "orcamento": {
+                steps: ["servico", "detalhes", "prazo", "contato"],
+                currentStep: 0,
+                data: {}
+            }
+        };
+        
+        // Palavras-chave para entender intenções
+        this.intencoes = {
+            saudacao: ["oi", "olá", "bom dia", "boa tarde", "boa noite", "e aí", "tudo bem"],
+            agendamento: ["agendar", "marcar", "consulta", "reunião", "horário", "disponibilidade"],
+            cancelamento: ["cancelar", "desmarcar", "remover", "adiar"],
+            precos: ["preço", "custo", "valor", "quanto custa", "orçamento", "investimento"],
+            servicos: ["serviço", "consultoria", "desenvolvimento", "suporte", "oferecem"],
+            pagamento: ["pagamento", "pagar", "boleto", "cartão", "pix", "transferência", "desconto"],
+            finalizacao: ["obrigado", "valeu", "agradeço", "até logo", "tchau", "adeus"]
         };
     }
 
+    // Método para iniciar o chatbot com uma mensagem personalizada
     iniciar() {
-        // Mensagem inicial com sugestões de tópicos
-        return "Olá! Sou o assistente virtual da Andrômeda Corp. Sobre o que gostaria de falar hoje?\n\nPosso ajudar com:\n- Informações sobre nossos serviços\n- Métodos de pagamento\n- Agendamento de consultorias\n- Solicitação de orçamentos\n- Suporte técnico\n- Dúvidas frequentes";
+        const horaAtual = new Date().getHours();
+        let saudacao = "";
+
+        if (horaAtual >= 5 && horaAtual < 12) {
+            saudacao = "Bom dia";
+        } else if (horaAtual >= 12 && horaAtual < 18) {
+            saudacao = "Boa tarde";
+        } else {
+            saudacao = "Boa noite";
+        }
+
+        return `${saudacao}! Sou o assistente virtual da Andrômeda Corp. Como posso ajudá-lo hoje? Posso fornecer informações sobre nossos serviços, agendar uma consultoria, ou responder dúvidas sobre pagamentos e suporte.`;
     }
 
-    sugerirRespostasRapidas() {
-        // Sugestões de respostas rápidas baseadas no contexto atual
-        if (!this.nomeUsuario) {
-            return ["Olá", "Bom dia", "Boa tarde", "Boa noite"];
-        }
-        
-        if (this.conversationContext === "agendamento") {
-            return ["Consultoria em TI", "Desenvolvimento de Software", "Suporte Técnico", "Treinamento"];
-        }
-        
-        if (this.conversationContext === "orcamento") {
-            return ["Consultoria", "Desenvolvimento", "Suporte", "Auditoria de TI", "Serviços em Cloud"];
-        }
-        
-        // Sugestões padrão
-        return [
-            "Quero saber sobre consultoria",
-            "Preciso de um orçamento",
-            "Métodos de pagamento",
-            "Quero agendar um serviço",
-            "Horário de funcionamento"
-        ];
-    }
-
+    // Método principal para processar mensagens do usuário
     processMessage(message) {
-        message = message.toLowerCase();
-
-        // Contexto inicial: Saudação e nome do usuário
-        if (!this.nomeUsuario && (message.includes("olá") || message.includes("oi") || message.includes("bom dia") || message.includes("boa tarde") || message.includes("boa noite"))) {
-            return "Olá! Bem-vindo ao nosso atendimento virtual. Como posso chamá-lo(a)?";
-        }
+        // Registrar mensagem no histórico
+        this.conversationHistory.push({
+            sender: 'user',
+            message: message,
+            timestamp: new Date()
+        });
         
-        if (!this.nomeUsuario && !this.conversationContext) {
-            this.nomeUsuario = message.charAt(0).toUpperCase() + message.slice(1);
-            return `Prazer em conhecê-lo(a), ${this.nomeUsuario}! ${this.iniciar()}`;
-        }
-
-        // Resposta para ajuda geral
-        if (message.includes("ajuda") || message.includes("opções") || message.includes("o que você faz")) {
-            return this.iniciar();
-        }
-
-        // FAQ: Respostas automáticas para perguntas frequentes
-        for (const [keyword, response] of Object.entries(this.faq)) {
-            if (message.includes(keyword)) {
+        // Atualizar tempo da última interação
+        this.lastInteractionTime = new Date();
+        
+        // Normalizar a mensagem do usuário
+        const normalizedMessage = message.toLowerCase().trim();
+        
+        // Verificar se o chatbot está em um fluxo de conversa específico
+        if (this.currentStep !== null) {
+            const response = this.processConversationFlow(normalizedMessage);
+            if (response) {
+                this.addToHistory('bot', response);
                 return response;
             }
         }
-
-        // Cobrança: Informações sobre métodos de pagamento, descontos, etc.
-        if (message.includes("pagamento") || message.includes("preço") || message.includes("valor") || message.includes("desconto") || message.includes("reembolso") || message.includes("parcela")) {
-            for (const [keyword, response] of Object.entries(this.cobrancaInfo)) {
-                if (message.includes(keyword)) {
+        
+        // Obter nome do usuário se ainda não tiver
+        if (!this.nomeUsuario) {
+            // Se for uma saudação, perguntar o nome
+            if (this.matchIntencao(normalizedMessage, this.intencoes.saudacao)) {
+                this.conversationContext = "solicitando_nome";
+                const response = "Olá! Bem-vindo ao atendimento virtual da Andrômeda Corp. Como posso chamá-lo(a)?";
+                this.addToHistory('bot', response);
+                return response;
+            }
+            
+            // Se não for saudação, assumir que a mensagem é o nome
+            if (this.conversationContext === "solicitando_nome" || !this.conversationContext) {
+                this.nomeUsuario = this.capitalizeName(normalizedMessage);
+                this.conversationContext = null;
+                const response = `Prazer em conhecê-lo(a), ${this.nomeUsuario}! Como posso ajudar hoje? Posso falar sobre nossos serviços, agendar uma consultoria ou responder perguntas sobre pagamentos.`;
+                this.addToHistory('bot', response);
+                return response;
+            }
+        }
+        
+        // Verificar intenções do usuário
+        if (this.matchIntencao(normalizedMessage, this.intencoes.saudacao)) {
+            const response = this.nomeUsuario ? 
+                `Olá ${this.nomeUsuario}! Em que posso ajudá-lo hoje?` : 
+                "Olá! Como posso ajudá-lo hoje?";
+            this.addToHistory('bot', response);
+            return response;
+        }
+        
+        // Intenção de finalização
+        if (this.matchIntencao(normalizedMessage, this.intencoes.finalizacao)) {
+            const response = this.nomeUsuario ? 
+                `Foi um prazer ajudá-lo, ${this.nomeUsuario}! Se precisar de mais alguma coisa, estou à disposição. Tenha um ótimo dia!` : 
+                "Foi um prazer ajudá-lo! Se precisar de mais alguma coisa, estou à disposição. Tenha um ótimo dia!";
+            this.addToHistory('bot', response);
+            return response;
+        }
+        
+        // Intenção de agendamento
+        if (this.matchIntencao(normalizedMessage, this.intencoes.agendamento)) {
+            this.iniciarFluxo("agendamento");
+            const response = "Claro! Vamos agendar seu atendimento. Qual serviço você tem interesse? Temos consultoria em TI, desenvolvimento de software e suporte técnico.";
+            this.addToHistory('bot', response);
+            return response;
+        }
+        
+        // Intenção de cancelamento
+        if (this.matchIntencao(normalizedMessage, this.intencoes.cancelamento)) {
+            if (this.agenda.length > 0) {
+                const ultimoAgendamento = this.agenda.pop();
+                const response = `O agendamento para "${ultimoAgendamento.servico}" no dia ${ultimoAgendamento.data} às ${ultimoAgendamento.horario} foi cancelado com sucesso.`;
+                this.addToHistory('bot', response);
+                return response;
+            } else {
+                const response = "Você não possui nenhum agendamento ativo. Gostaria de agendar um atendimento agora?";
+                this.addToHistory('bot', response);
+                return response;
+            }
+        }
+        
+        // Intenção de preços/orçamento
+        if (this.matchIntencao(normalizedMessage, this.intencoes.precos)) {
+            // Verificar se a mensagem menciona um serviço específico
+            for (const [key, servico] of Object.entries(this.servicos)) {
+                if (normalizedMessage.includes(key) || normalizedMessage.includes(servico.nome.toLowerCase())) {
+                    const response = `O valor para ${servico.nome} é ${servico.preco}. ${servico.descricao} Gostaria de mais informações ou de agendar este serviço?`;
+                    this.addToHistory('bot', response);
                     return response;
                 }
             }
-            // Resposta padrão sobre pagamentos
-            return "Oferecemos diversas formas de pagamento, incluindo cartão, boleto, PIX e transferência. Gostaria de informações mais específicas sobre algum método de pagamento, descontos ou parcelamento?";
+            
+            // Se não mencionar serviço específico
+            const response = "Temos diferentes serviços com valores variados. Consultoria em TI a partir de R$1.500,00, Desenvolvimento de Software com orçamento personalizado, e Suporte Técnico por R$150,00/hora ou planos mensais a partir de R$800,00. Sobre qual serviço você gostaria de saber mais?";
+            this.addToHistory('bot', response);
+            return response;
         }
-
-        // Serviços: Informações sobre os serviços oferecidos
-        if (message.includes("serviço") || message.includes("oferecem") || message.includes("trabalho") || message.includes("produto")) {
-            return "Na Andrômeda Corp., oferecemos diversos serviços de tecnologia, incluindo:\n\n- Consultoria em TI\n- Desenvolvimento de Software\n- Suporte Técnico\n- Treinamentos\n- Auditoria de TI\n- Serviços em Cloud\n\nSobre qual serviço gostaria de saber mais detalhes?";
+        
+        // Intenção sobre serviços
+        if (this.matchIntencao(normalizedMessage, this.intencoes.servicos)) {
+            // Verificar se a mensagem menciona um serviço específico
+            for (const [key, servico] of Object.entries(this.servicos)) {
+                if (normalizedMessage.includes(key) || normalizedMessage.includes(servico.nome.toLowerCase())) {
+                    const response = `${servico.nome}: ${servico.descricao} O valor é ${servico.preco}. Disponibilidade: ${servico.disponibilidade}. Gostaria de agendar ou saber mais?`;
+                    this.addToHistory('bot', response);
+                    return response;
+                }
+            }
+            
+            // Se não mencionar serviço específico
+            const response = "A Andrômeda Corp. oferece três serviços principais:\n1. Consultoria em TI: análise completa da sua infraestrutura e recomendações de otimização.\n2. Desenvolvimento de Software: criação de soluções personalizadas para o seu negócio.\n3. Suporte Técnico: assistência para resolução de problemas de TI.\n\nSobre qual serviço você gostaria de saber mais?";
+            this.addToHistory('bot', response);
+            return response;
         }
-
-        // Informações detalhadas sobre serviços específicos
-        for (const [keyword, response] of Object.entries(this.servicosInfo)) {
-            if (message.includes(keyword)) {
+        
+        // Verificar FAQ
+        for (const [keyword, response] of Object.entries(this.faq)) {
+            if (normalizedMessage.includes(keyword)) {
+                this.addToHistory('bot', response);
                 return response;
             }
         }
-
-        // Solicitar orçamento
-        if (message.includes("orçamento") || message.includes("proposta") || message.includes("quanto custa") || message.includes("preço de") || message.includes("valor de")) {
-            this.conversationContext = "orcamento";
-            return "Claro! Para qual serviço você gostaria de receber um orçamento? (Consultoria, Desenvolvimento, Suporte, Treinamento, Auditoria de TI ou Serviços em Cloud)";
-        }
-
-        if (this.conversationContext === "orcamento") {
-            let servico = "não especificado";
-            
-            for (const keyword of Object.keys(this.servicosInfo)) {
-                if (message.includes(keyword)) {
-                    servico = keyword;
-                    break;
-                }
+        
+        // Verificar informações de cobrança
+        for (const [keyword, response] of Object.entries(this.cobrancaInfo)) {
+            if (normalizedMessage.includes(keyword)) {
+                this.addToHistory('bot', response);
+                return response;
             }
-            
-            this.conversationContext = null;
-            return `Obrigado pelo interesse! Vou registrar sua solicitação de orçamento para ${servico}. Em breve, um de nossos consultores entrará em contato para entender melhor sua necessidade e preparar uma proposta personalizada. Posso ajudar com mais alguma informação?`;
-        }
-
-        // Agendamento
-        if (message.includes("agendar") || message.includes("marcar") || message.includes("reunião") || message.includes("consulta")) {
-            this.conversationContext = "agendamento";
-            return "Claro! Para qual serviço você gostaria de agendar um atendimento? (Consultoria, Desenvolvimento, Suporte ou Treinamento)";
-        }
-
-        if (this.conversationContext === "agendamento") {
-            this.agenda.push(message);
-            this.conversationContext = "agendamento_data";
-            return `Ótimo! Qual seria a melhor data e horário para o seu atendimento de ${message}?`;
         }
         
-        if (this.conversationContext === "agendamento_data") {
-            const servico = this.agenda[this.agenda.length - 1];
-            this.agenda.push(message); // Salva a data e hora
-            this.conversationContext = null;
-            return `Perfeito! Seu agendamento para ${servico} foi registrado para ${message}. Um de nossos atendentes entrará em contato para confirmar. Posso ajudar com mais alguma coisa?`;
-        }
-
-        // Cancelamento de agendamento
-        if (message.includes("cancelar") || message.includes("desmarcar")) {
-            if (this.agenda.length > 0) {
-                if (this.agenda.length % 2 === 0) { // Se tiver data e serviço completos
-                    const ultimoServico = this.agenda[this.agenda.length - 2];
-                    const ultimaData = this.agenda[this.agenda.length - 1];
-                    this.agenda.pop();
-                    this.agenda.pop();
-                    return `O agendamento de ${ultimoServico} marcado para ${ultimaData} foi cancelado com sucesso.`;
-                } else {
-                    const ultimoServico = this.agenda.pop();
-                    return `O agendamento de ${ultimoServico} (ainda sem data confirmada) foi cancelado com sucesso.`;
+        // Se chegou até aqui, não encontrou uma resposta específica
+        // Tentar encontrar palavras-chave parciais
+        for (const [keyword, response] of Object.entries({...this.faq, ...this.cobrancaInfo})) {
+            // Dividir a keyword em palavras
+            const keywordParts = keyword.split(" ");
+            for (const part of keywordParts) {
+                if (part.length > 3 && normalizedMessage.includes(part)) {
+                    this.addToHistory('bot', response);
+                    return response;
                 }
-            } else {
-                return "Você não possui nenhum agendamento ativo para cancelar.";
             }
         }
-
-        // Verificação de agendamentos
-        if (message.includes("meus agendamentos") || message.includes("consultar agenda") || message.includes("verificar agendamento")) {
-            if (this.agenda.length === 0) {
-                return "Você não possui nenhum agendamento ativo no momento.";
-            }
-            
-            let resposta = "Aqui estão seus agendamentos:";
-            for (let i = 0; i < this.agenda.length; i += 2) {
-                const servico = this.agenda[i];
-                const data = i + 1 < this.agenda.length ? this.agenda[i + 1] : "Data ainda não confirmada";
-                resposta += `\n- ${servico}: ${data}`;
-            }
-            
-            return resposta;
-        }
-
-        // Suporte técnico
-        if (message.includes("suporte") || message.includes("problema") || message.includes("erro") || message.includes("ajuda técnica")) {
-            return "Para suporte técnico, precisamos de algumas informações:\n\n1. Qual o problema específico que está enfrentando?\n2. Qual sistema ou equipamento está com problema?\n3. Desde quando o problema ocorre?\n\nApós receber essas informações, encaminharei para nossa equipe técnica.";
-        }
-
-        // Contato
-        if (message.includes("contato") || message.includes("falar com atendente") || message.includes("pessoa real") || message.includes("telefone") || message.includes("email")) {
-            return "Você pode entrar em contato conosco pelos seguintes canais:\n\n- Telefone: (11) 5555-1234\n- Email: contato@andromedacorp.com.br\n- Endereço: Av. Principal, 1000, Centro\n\nNosso horário de atendimento é de segunda a sexta, das 8h às 18h, e aos sábados das 8h às 12h.";
-        }
-
-        // Feedback
-        if (message.includes("feedback") || message.includes("avaliação") || message.includes("sugestão") || message.includes("reclamação")) {
-            return "Agradecemos por querer compartilhar sua experiência! Seu feedback é muito importante para melhorarmos nossos serviços. Por favor, conte-nos o que achou do nosso atendimento ou serviço.";
-        }
-
-        // Despedida
-        if (message.includes("tchau") || message.includes("adeus") || message.includes("até logo") || message.includes("até mais") || message.includes("obrigado")) {
-            return `Foi um prazer atendê-lo(a), ${this.nomeUsuario}! Se precisar de mais informações, estou à disposição. Tenha um ótimo dia!`;
-        }
-
-        // Inteligência artificial
-        if (message.includes("inteligência artificial") || message.includes("ia") || message.includes("chatbot") || message.includes("bot")) {
-            return "Sou um assistente virtual desenvolvido pela equipe da Andrômeda Corp. para facilitar o atendimento inicial. Posso responder perguntas frequentes, ajudar com agendamentos e fornecer informações sobre nossos serviços. Para questões mais complexas, encaminho para nossa equipe humana especializada.";
-        }
-
+        
         // Resposta padrão para mensagens desconhecidas
-        return "Não tenho certeza se entendi completamente. Posso ajudar com informações sobre nossos serviços, agendamentos, métodos de pagamento ou suporte técnico. Poderia reformular sua pergunta ou escolher um desses tópicos?";
+        const defaultResponses = [
+            "Desculpe, não entendi completamente sua solicitação. Poderia reformular ou ser mais específico?",
+            `${this.nomeUsuario ? this.nomeUsuario + ', p' : 'P'}osso ajudar com informações sobre nossos serviços, agendamentos, pagamentos ou suporte. O que você precisa?`,
+            "Não consegui compreender sua pergunta. Posso fornecer informações sobre consultoria, desenvolvimento de software ou suporte técnico. O que você gostaria de saber?",
+            "Hmm, não tenho certeza do que você está perguntando. Poderia tentar novamente com outras palavras?"
+        ];
+        
+        const randomResponse = defaultResponses[Math.floor(Math.random() * defaultResponses.length)];
+        this.addToHistory('bot', randomResponse);
+        return randomResponse;
+    }
+    
+    // Método para iniciar um fluxo de conversa predefinido
+    iniciarFluxo(tipoFluxo) {
+        if (this.conversationFlows[tipoFluxo]) {
+            this.currentStep = tipoFluxo;
+            this.conversationFlows[tipoFluxo].currentStep = 0;
+            this.conversationFlows[tipoFluxo].data = {};
+        }
+    }
+    
+    // Método para processar mensagens dentro de um fluxo de conversa
+    processConversationFlow(message) {
+        if (!this.currentStep) return null;
+        
+        const flow = this.conversationFlows[this.currentStep];
+        const currentStepName = flow.steps[flow.currentStep];
+        
+        // Processar resposta baseada no passo atual
+        switch (this.currentStep) {
+            case "agendamento":
+                return this.processAgendamentoFlow(message, flow, currentStepName);
+            case "orcamento":
+                return this.processOrcamentoFlow(message, flow, currentStepName);
+            default:
+                return null;
+        }
+    }
+    
+    // Processamento específico para fluxo de agendamento
+    processAgendamentoFlow(message, flow, currentStepName) {
+        switch (currentStepName) {
+            case "servico":
+                // Verificar qual serviço foi solicitado
+                let servicoSelecionado = null;
+                for (const [key, servico] of Object.entries(this.servicos)) {
+                    if (message.toLowerCase().includes(key) || 
+                        message.toLowerCase().includes(servico.nome.toLowerCase())) {
+                        servicoSelecionado = servico.nome;
+                        break;
+                    }
+                }
+                
+                if (!servicoSelecionado) {
+                    // Se não identificou o serviço claramente
+                    return "Por favor, especifique qual serviço você deseja agendar: Consultoria em TI, Desenvolvimento de Software ou Suporte Técnico.";
+                }
+                
+                // Armazenar o serviço e avançar para o próximo passo
+                flow.data.servico = servicoSelecionado;
+                flow.currentStep++;
+                return `Ótimo! Você escolheu ${servicoSelecionado}. Para qual data você gostaria de agendar? (formato: dd/mm/aaaa)`;
+                
+            case "data":
+                // Validar o formato da data
+                const dataRegex = /(\d{1,2})\/(\d{1,2})\/(\d{4})/;
+                const dataMatch = message.match(dataRegex);
+                
+                if (!dataMatch) {
+                    return "Por favor, informe a data no formato dd/mm/aaaa (exemplo: 15/05/2025).";
+                }
+                
+                const data = message.trim();
+                flow.data.data = data;
+                flow.currentStep++;
+                return `Data agendada para ${data}. Qual horário você prefere? Nosso horário de atendimento é de segunda a sexta, das 8h às 18h.`;
+                
+            case "horario":
+                // Validar formato de horário
+                const horarioRegex = /(\d{1,2}):(\d{2})/;
+                const horarioMatch = message.match(horarioRegex);
+                
+                if (!horarioMatch) {
+                    return "Por favor, informe o horário no formato hh:mm (exemplo: 14:30).";
+                }
+                
+                const horario = message.trim();
+                flow.data.horario = horario;
+                
+                // Se já sabemos o nome do usuário, pular para o próximo passo
+                if (this.nomeUsuario) {
+                    flow.data.nome = this.nomeUsuario;
+                    flow.currentStep += 2; // Pular o passo de nome
+                    return `Ótimo, ${this.nomeUsuario}! Precisamos de um contato (telefone ou e-mail) para confirmar seu agendamento.`;
+                }
+                
+                flow.currentStep++;
+                return "Por favor, informe seu nome completo para o agendamento.";
+                
+            case "nome":
+                const nome = this.capitalizeName(message);
+                flow.data.nome = nome;
+                this.nomeUsuario = nome; // Atualizar o nome do usuário globalmente
+                flow.currentStep++;
+                return `Obrigado, ${nome}! Agora precisamos de um contato (telefone ou e-mail) para confirmar seu agendamento.`;
+                
+            case "contato":
+                // Validação básica de e-mail ou telefone
+                const emailRegex = /\S+@\S+\.\S+/;
+                const telefoneRegex = /(\d{10,11})|(\d{2}[-. ]\d{4,5}[-. ]\d{4})/;
+                
+                if (!emailRegex.test(message) && !telefoneRegex.test(message.replace(/\D/g, ''))) {
+                    return "Por favor, informe um e-mail válido ou um telefone com DDD.";
+                }
+                
+                flow.data.contato = message.trim();
+                flow.currentStep++;
+                
+                // Preparar resumo para confirmação
+                const resumo = `Serviço: ${flow.data.servico}\nData: ${flow.data.data}\nHorário: ${flow.data.horario}\nNome: ${flow.data.nome}\nContato: ${flow.data.contato}`;
+                
+                return `Por favor, confirme os dados do seu agendamento:\n\n${resumo}\n\nEstá correto? (sim/não)`;
+                
+            case "confirmacao":
+                if (message.toLowerCase().includes("sim") || message.toLowerCase().includes("correto") || message.toLowerCase() === "s") {
+                    // Finalizar agendamento
+                    this.agenda.push({...flow.data});
+                    this.currentStep = null; // Encerrar o fluxo
+                    
+                    return `Agendamento confirmado com sucesso! Enviaremos uma confirmação para o contato ${flow.data.contato}. Obrigado pela preferência, ${flow.data.nome}. Posso ajudar com mais alguma coisa?`;
+                } else {
+                    // Cancelar ou reiniciar
+                    this.currentStep = null;
+                    return "Agendamento cancelado. Você gostaria de tentar novamente ou posso ajudar com outra coisa?";
+                }
+        }
+    }
+    
+    // Processamento específico para fluxo de orçamento
+    processOrcamentoFlow(message, flow, currentStepName) {
+        // Implementação similar ao fluxo de agendamento
+        // ...
+        
+        // Versão simplificada para demonstração
+        this.currentStep = null;
+        return "Recebi sua solicitação de orçamento. Um de nossos consultores entrará em contato em breve!";
+    }
+    
+    // Método auxiliar para adicionar mensagem ao histórico
+    addToHistory(sender, message) {
+        this.conversationHistory.push({
+            sender: sender,
+            message: message,
+            timestamp: new Date()
+        });
+    }
+    
+    // Método auxiliar para verificar se uma mensagem corresponde a uma intenção
+    matchIntencao(message, keywords) {
+        return keywords.some(keyword => message.includes(keyword));
+    }
+    
+    // Método auxiliar para capitalizar nome
+    capitalizeName(name) {
+        return name
+            .split(' ')
+            .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+            .join(' ');
+    }
+    
+    // Método para sugerir respostas rápidas baseadas no contexto
+    sugerirRespostasRapidas() {
+        if (!this.currentStep) {
+            return [
+                "Quero agendar um serviço",
+                "Quais são os serviços oferecidos?",
+                "Informações sobre pagamentos",
+                "Horário de funcionamento"
+            ];
+        }
+        
+        // Sugestões baseadas no fluxo atual
+        if (this.currentStep === "agendamento") {
+            const flow = this.conversationFlows[this.currentStep];
+            const currentStepName = flow.steps[flow.currentStep];
+            
+            switch (currentStepName) {
+                case "servico":
+                    return ["Consultoria em TI", "Desenvolvimento de Software", "Suporte Técnico"];
+                case "data":
+                    const hoje = new Date();
+                    const amanha = new Date(hoje);
+                    amanha.setDate(hoje.getDate() + 1);
+                    const proxSemana = new Date(hoje);
+                    proxSemana.setDate(hoje.getDate() + 7);
+                    
+                    return [
+                        this.formatarData(amanha),
+                        this.formatarData(proxSemana),
+                        "Próxima segunda-feira"
+                    ];
+                case "horario":
+                    return ["09:00", "14:30", "16:00"];
+                case "confirmacao":
+                    return ["Sim, confirmo", "Não, preciso corrigir"];
+                default:
+                    return [];
+            }
+        }
+        
+        return [];
+    }
+    
+    // Método auxiliar para formatar data
+    formatarData(data) {
+        const dia = String(data.getDate()).padStart(2, '0');
+        const mes = String(data.getMonth() + 1).padStart(2, '0');
+        const ano = data.getFullYear();
+        return `${dia}/${mes}/${ano}`;
     }
 }
 
@@ -220,40 +469,126 @@ function addMessage(message, sender) {
     const chatMessages = document.getElementById('chat-messages');
     const messageElement = document.createElement('div');
     messageElement.classList.add('message', sender === 'bot' ? 'bot-message' : 'user-message');
-    messageElement.textContent = message;
+    
+    // Converter URLs em links clicáveis
+    const messageWithLinks = message.replace(
+        /(https?:\/\/[^\s]+)/g, 
+        '<a href="$1" target="_blank" class="chat-link">$1</a>'
+    );
+    
+    messageElement.innerHTML = messageWithLinks;
     chatMessages.appendChild(messageElement);
     chatMessages.scrollTop = chatMessages.scrollHeight;
+    
+    // Animação de digitação para mensagens do bot
+    if (sender === 'bot') {
+        messageElement.style.opacity = '0';
+        messageElement.style.transform = 'translateY(10px)';
+        
+        setTimeout(() => {
+            messageElement.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+            messageElement.style.opacity = '1';
+            messageElement.style.transform = 'translateY(0)';
+        }, 100);
+    }
+}
+
+// Função para exibir sugestões de resposta rápida
+function displaySuggestions(suggestions) {
+    const suggestionsContainer = document.getElementById('suggestions-container');
+    suggestionsContainer.innerHTML = '';
+    
+    if (!suggestions || suggestions.length === 0) {
+        suggestionsContainer.style.display = 'none';
+        return;
+    }
+    
+    suggestions.forEach(suggestion => {
+        const suggestionButton = document.createElement('button');
+        suggestionButton.classList.add('suggestion-btn');
+        suggestionButton.textContent = suggestion;
+        suggestionButton.addEventListener('click', () => {
+            document.getElementById('message-input').value = suggestion;
+            document.getElementById('send-button').click();
+        });
+        suggestionsContainer.appendChild(suggestionButton);
+    });
+    
+    suggestionsContainer.style.display = 'flex';
 }
 
 // Inicialização do Chatbot
 const chatbotInstance = new Chatbot();
+
+// Exibir mensagem inicial de boas-vindas
+document.addEventListener('DOMContentLoaded', () => {
+    const initialMessage = chatbotInstance.iniciar();
+    setTimeout(() => {
+        addMessage(initialMessage, 'bot');
+        // Mostrar sugestões iniciais
+        displaySuggestions(chatbotInstance.sugerirRespostasRapidas());
+    }, 500);
+    
+    // Adicionar indicador de digitação
+    const typingIndicator = document.createElement('div');
+    typingIndicator.id = 'typing-indicator';
+    typingIndicator.classList.add('typing-indicator');
+    typingIndicator.innerHTML = '<span></span><span></span><span></span>';
+    document.getElementById('chat-messages').appendChild(typingIndicator);
+    
+    // Esconder inicialmente
+    typingIndicator.style.display = 'none';
+});
+
+// Função para mostrar indicador de digitação
+function showTypingIndicator() {
+    const typingIndicator = document.getElementById('typing-indicator');
+    if (typingIndicator) {
+        typingIndicator.style.display = 'flex';
+        const chatMessages = document.getElementById('chat-messages');
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+}
+
+// Função para esconder indicador de digitação
+function hideTypingIndicator() {
+    const typingIndicator = document.getElementById('typing-indicator');
+    if (typingIndicator) {
+        typingIndicator.style.display = 'none';
+    }
+}
 
 // Captura de mensagens do usuário
 document.getElementById('send-button').addEventListener('click', () => {
     const userInput = document.getElementById('message-input');
     const userMessage = userInput.value.trim();
     if (userMessage) {
+        // Desativar sugestões ao enviar mensagem
+        displaySuggestions([]);
+        
+        // Exibir mensagem do usuário
         addMessage(userMessage, 'user');
         
-        // Mostrar indicador de digitação
-        const typingIndicator = document.getElementById('typing-indicator');
-        if (typingIndicator) {
-            typingIndicator.style.display = 'flex';
-        }
+        // Limpar input
+        userInput.value = '';
         
-        // Processar mensagem e responder com atraso para simular "pensamento"
+        // Mostrar indicador de digitação
+        showTypingIndicator();
+        
+        // Simular tempo de resposta do bot (varia com base na complexidade da mensagem)
+        const responseTime = Math.min(1000 + userMessage.length * 20, 3000);
+        
         setTimeout(() => {
-            if (typingIndicator) {
-                typingIndicator.style.display = 'none';
-            }
+            // Esconder indicador de digitação
+            hideTypingIndicator();
+            
+            // Obter e exibir resposta do bot
             const botResponse = chatbotInstance.processMessage(userMessage);
             addMessage(botResponse, 'bot');
             
-            // Atualizar sugestões de resposta após cada interação
+            // Mostrar sugestões após resposta
             displaySuggestions(chatbotInstance.sugerirRespostasRapidas());
-        }, 800);
-        
-        userInput.value = '';
+        }, responseTime);
     }
 });
 
@@ -264,35 +599,25 @@ document.getElementById('message-input').addEventListener('keypress', (event) =>
     }
 });
 
-// Função para exibir sugestões de resposta rápida
-function displaySuggestions(suggestions) {
-    const suggestionsContainer = document.getElementById('suggestions-container');
-    if (!suggestionsContainer) return;
-    
-    suggestionsContainer.innerHTML = '';
-    
-    suggestions.forEach(suggestion => {
-        const suggestionButton = document.createElement('button');
-        suggestionButton.classList.add('suggestion-btn');
-        suggestionButton.textContent = suggestion;
-        
-        suggestionButton.addEventListener('click', () => {
-            document.getElementById('message-input').value = suggestion;
-            document.getElementById('send-button').click();
-        });
-        
-        suggestionsContainer.appendChild(suggestionButton);
-    });
+// Detectar inatividade para sugerir interação
+let inactivityTimer;
+function resetInactivityTimer() {
+    clearTimeout(inactivityTimer);
+    inactivityTimer = setTimeout(() => {
+        if (chatbotInstance.conversationHistory.length > 2) {
+            const suggestions = [
+                "Posso ajudar com mais alguma coisa?",
+                "Gostaria de saber mais sobre nossos serviços?",
+                "Precisa de ajuda para agendar uma consultoria?"
+            ];
+            const randomIndex = Math.floor(Math.random() * suggestions.length);
+            addMessage(suggestions[randomIndex], 'bot');
+            displaySuggestions(chatbotInstance.sugerirRespostasRapidas());
+        }
+    }, 120000); // 2 minutos de inatividade
 }
 
-// Iniciar o chat quando a página carrega
-window.addEventListener('DOMContentLoaded', () => {
-    // Mostrar mensagem inicial com um pequeno atraso
-    setTimeout(() => {
-        const initialMessage = chatbotInstance.iniciar();
-        addMessage(initialMessage, 'bot');
-        
-        // Mostrar sugestões iniciais
-        displaySuggestions(chatbotInstance.sugerirRespostasRapidas());
-    }, 500);
-});
+// Reiniciar timer em interações do usuário
+document.addEventListener('mousemove', resetInactivityTimer);
+document.addEventListener('keypress', resetInactivityTimer);
+resetInactivityTimer();
