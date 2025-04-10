@@ -3,22 +3,28 @@ body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     margin: 0;
     padding: 0;
-    background-color: #f9fafb;
-    color: #333;
+    background: linear-gradient(to right, #007bff, #6f42c1);
+    color: #fff;
 }
 
 .container {
     display: flex;
     flex-direction: column;
     height: 100vh;
+    max-width: 1200px;
+    margin: 0 auto;
+    background-color: rgba(255, 255, 255, 0.9);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    border-radius: 10px;
 }
 
 header {
-    background: linear-gradient(135deg, #4a86e8, #6fa8dc);
+    background: linear-gradient(to right, #007bff, #6f42c1);
     color: white;
     padding: 20px;
     text-align: center;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    border-top-left-radius: 10px;
+    border-top-right-radius: 10px;
 }
 
 header h1 {
@@ -34,11 +40,11 @@ header p {
 main {
     display: flex;
     flex: 1;
+    padding: 20px;
 }
 
 .content {
     flex: 3;
-    padding: 20px;
     overflow-y: auto;
 }
 
@@ -49,10 +55,11 @@ main {
     flex-direction: column;
     background-color: white;
     min-width: 300px;
+    border-radius: 0 0 10px 10px;
 }
 
 .chat-header {
-    background: linear-gradient(135deg, #4a86e8, #6fa8dc);
+    background: linear-gradient(to right, #007bff, #6f42c1);
     color: white;
     padding: 10px;
     text-align: center;
@@ -102,12 +109,12 @@ main {
 }
 
 #message-input:focus {
-    border-color: #4a86e8;
+    border-color: #007bff;
     outline: none;
 }
 
 #send-button {
-    background: linear-gradient(135deg, #4a86e8, #6fa8dc);
+    background: linear-gradient(to right, #007bff, #6f42c1);
     color: white;
     border: none;
     padding: 10px 15px;
@@ -117,7 +124,7 @@ main {
 }
 
 #send-button:hover {
-    background: linear-gradient(135deg, #3a76d8, #5f9edc);
+    background: linear-gradient(to right, #0056b3, #4527a0);
 }
 
 .product {
